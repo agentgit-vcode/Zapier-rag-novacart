@@ -44,8 +44,6 @@ The agent prompt (`Agent Prompt.txt`) enforces:
 3. Add the ChatGPT (OpenAI) conversation action using the prompt in `Agent Prompt.txt`
 4. Configure the Zapier workflow: Chatbot → Pinecone Search → ChatGPT → Reply
 
-For a detailed walkthrough, see `Week 2-Zapier_Solution_Step-by-Step _Guide.docx`.
-
 ## Project Context
 
-Built as part of an AI/ML course (Week 2 — RAG Agent assignment). The problem statement is in `RAG Problem Statement_Week 2.pdf`.
+Built as part of an AI/ML course (Week 2 — RAG Agent assignment).
