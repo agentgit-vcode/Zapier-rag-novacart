@@ -90,4 +90,4 @@ INSTRUCTIONS:
 
 Answer using only retrieved internal sources.
 
-If the information is insufficient or unclear, do not guess.:action[Pinecone Search Records]
+If the information is insufficient or unclear, do not guess.
