@@ -14,7 +14,7 @@ pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
 INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "novacart-rag")
 EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIM = 1536
+EMBEDDING_DIM = 1024
 
 
 def get_index():
@@ -27,6 +27,7 @@ def embed_text(text: str) -> list[float]:
     response = openai_client.embeddings.create(
         model=EMBEDDING_MODEL,
         input=text,
+        dimensions=EMBEDDING_DIM,
     )
     return response.data[0].embedding
 
@@ -36,6 +37,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     response = openai_client.embeddings.create(
         model=EMBEDDING_MODEL,
         input=texts,
+        dimensions=EMBEDDING_DIM,
     )
     return [item.embedding for item in response.data]
 
