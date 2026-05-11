@@ -52,8 +52,8 @@ Summary (source: chunk_id)     High/Med/Low
 
 ```bash
 # Clone the repo
-git clone https://github.com/agentgit-vcode/Zapier-rag-novacart.git
-cd Zapier-rag-novacart
+git clone https://github.com/agentgit-vcode/novacart-rag-agent.git
+cd novacart-rag-agent
 
 # Install dependencies
 pip install -r requirements.txt
