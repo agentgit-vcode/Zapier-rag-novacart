@@ -1,49 +1,131 @@
-# NovaCart RAG Agent (Zapier + Pinecone)
+# NovaCart RAG Agent — Grounded Q&A over Internal Documents
 
-A Retrieval-Augmented Generation (RAG) agent built on Zapier that answers questions about NovaCart's business data using Pinecone as the vector database and ChatGPT (OpenAI) for response generation.
+A web-based RAG (Retrieval-Augmented Generation) agent that answers business questions about NovaCart using only evidence retrieved from a Pinecone vector database — never from the LLM's prior knowledge. Every answer is cited, grounded, and verifiable.
 
-## Architecture
+## How It Works
 
 ```
-User Question → Zapier Chatbot → Pinecone Vector Search → ChatGPT (OpenAI) → Grounded Response
+User Question
+      │
+      ▼
+┌─────────────────────┐
+│  OpenAI Embeddings  │  text-embedding-3-small (1536 dims)
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│  Pinecone Search    │  Top-8 chunks by cosine similarity
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│  GPT-4o (OpenAI)    │  Grounded generation with strict rules
+└────────┬────────────┘
+         │
+    ┌────┼────────────────────────┐
+    │    │                        │
+Answer  Citations              Confidence
+Summary (source: chunk_id)     High/Med/Low
 ```
 
-The agent follows strict grounding rules — it only answers using retrieved evidence from the vector database and never relies on the LLM's prior knowledge.
+## Features
 
-## Components
+- **Chat** — natural language Q&A with streaming-style responses
+- **Citations** — every factual claim cites the source chunk ID
+- **Sources Panel** — view retrieved chunks ranked by relevance score
+- **Confidence Level** — High / Medium / Low based on evidence quality
+- **Grounding** — never hallucinates, never uses LLM prior knowledge
+- **Multi-format Knowledge Base** — indexes DOCX, PPTX, PDF, and XLSX documents
 
-| Component | Role |
-|-----------|------|
-| **Zapier Chatbot** | User interface for submitting questions |
-| **Pinecone** | Vector database storing embedded document chunks |
-| **ChatGPT (OpenAI)** | Generates responses grounded in retrieved context |
-| **Agent Prompt** | System prompt enforcing citation and grounding rules |
+## Tech Stack
 
-## Knowledge Base (Files/)
+| Layer | Technology |
+|-------|-----------|
+| UI | Streamlit |
+| Vector DB | Pinecone (serverless) |
+| Embeddings | OpenAI text-embedding-3-small |
+| LLM | OpenAI GPT-4o |
+| Document Parsing | python-docx, python-pptx, PyPDF2, openpyxl |
+| Language | 100% Python |
 
-The following NovaCart documents were chunked, embedded, and indexed into Pinecone:
+## Quick Start
 
-- **NovaCart Company Annual Report 2024.docx** — Annual financial and operational report
-- **NovaCart Company Intro.pptx** — Company overview presentation
-- **NovaCart_Product_Catalog.pdf** — Product catalog with SKU details
-- **SKU_Weekly_Sales_Conversion_3Y_with_Revenue.xlsx** — 3 years of weekly sales, conversion, and revenue data by SKU
+```bash
+# Clone the repo
+git clone https://github.com/agentgit-vcode/Zapier-rag-novacart.git
+cd Zapier-rag-novacart
 
-## Agent Behavior
+# Install dependencies
+pip install -r requirements.txt
 
-The agent prompt (`Agent Prompt.txt`) enforces:
+# Set your API keys
+cp .env.example .env
+# Edit .env and add your OpenAI and Pinecone API keys
 
-- **Grounding** — Only retrieved chunks are used; no speculation or prior knowledge
-- **Citations** — Every factual claim includes `(source: chunk_id)` inline citations
-- **Conflict handling** — Conflicting sources are surfaced, not resolved
-- **Structured output** — Responses follow a fixed format: Answer Summary, Supporting Evidence, Anomalies/Risks, Confidence Level
+# Seed the vector database (one-time)
+python seed.py
 
-## Setup
+# Run the app
+streamlit run app.py
+```
 
-1. Create a Pinecone index and upload the embedded document chunks from `Files/`
-2. Set up a Zapier Chatbot with a Pinecone search action
-3. Add the ChatGPT (OpenAI) conversation action using the prompt in `Agent Prompt.txt`
-4. Configure the Zapier workflow: Chatbot → Pinecone Search → ChatGPT → Reply
+## Knowledge Base
 
-## Project Context
+The following NovaCart documents are chunked, embedded, and indexed into Pinecone:
 
-Built as part of an AI/ML course (Week 2 — RAG Agent assignment).
+| Document | Format | Content |
+|----------|--------|---------|
+| NovaCart Company Annual Report 2024 | DOCX | Financial results, KPIs, business strategy |
+| NovaCart Company Intro | PPTX | Company overview, mission, product lines |
+| NovaCart Product Catalog | PDF | SKU details, pricing, product descriptions |
+| SKU Weekly Sales & Conversion (3Y) | XLSX | Weekly sales, conversion rates, revenue by SKU |
+
+## Agent Decision Logic
+
+| Condition | Agent Behavior |
+|-----------|---------------|
+| Sufficient evidence found | Answers with inline citations and "High" confidence |
+| Partial evidence | Answers with caveats, flags gaps, "Medium" confidence |
+| Conflicting sources | States the conflict, cites all chunk_ids, does not resolve |
+| No relevant chunks | Returns "Insufficient data to answer confidently" |
+| Question requires speculation | Refuses to infer — states "Needs human review" |
+
+## Grounding Rules (Enforced via System Prompt)
+
+- Use ONLY retrieved chunks — no LLM prior knowledge
+- Every factual claim must cite `(source: chunk_id)`
+- Never infer, speculate, or predict beyond retrieved data
+- If evidence is insufficient, say so explicitly
+- Conflicting sources are surfaced, not resolved
+
+## Project Structure
+
+```
+├── app.py                  # Streamlit app (Chat, Sources, About pages)
+├── rag_agent.py            # GPT-4o integration (grounded generation)
+├── vectorstore.py          # Pinecone client (embed, upsert, search)
+├── seed.py                 # Document chunking and indexing pipeline
+├── Agent Prompt.txt        # Original Zapier agent prompt (reference)
+├── Files/
+│   ├── NovaCart Company Annual Report 2024.docx
+│   ├── NovaCart Company Intro.pptx
+│   ├── NovaCart_Product_Catalog.pdf
+│   └── SKU_Weekly_Sales_Conversion_3Y_with_Revenue.xlsx
+├── docs/
+│   ├── PRD.md              # Product Requirements Document
+│   └── TECH_SPEC.md        # Technical Specification
+├── .streamlit/
+│   └── config.toml
+├── .env.example
+├── requirements.txt
+└── README.md
+```
+
+## Documentation
+
+- **[Product Requirements Document (PRD)](docs/PRD.md)** — problem statement, user stories, functional requirements, grounding rules, success metrics
+- **[Technical Specification](docs/TECH_SPEC.md)** — architecture, data pipeline, prompt design, retrieval parameters, ADRs
+
+## Background
+
+This project started as a Zapier-based automation (Chatbot → Pinecone → ChatGPT) and was rebuilt into a full-stack Python application with direct API integration, a proper chunking pipeline, and a Streamlit UI for interactive exploration.
